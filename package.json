@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "study design patterns using typescript",
   "main": "index.js",
-  "repository": "https://github.com/KiyonamiYu/design-pattern-typescript.git",
+  "repository": "https://github.com/KiyonamiYu/design-patterns-typescript.git",
   "author": "KiyonamiYu <514723273@qq.com>",
   "license": "MIT",
   "scripts": {
