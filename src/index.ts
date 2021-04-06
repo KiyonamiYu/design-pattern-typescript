@@ -1,1 +1,2 @@
-import "./strategy";
+// import "./strategy";
+import "./observer";
