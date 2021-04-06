@@ -2,7 +2,8 @@ import { DisplayElement } from "./display-element";
 import { Subject, WeatherData } from "./subject";
 
 export interface Observer {
-  update: (temperature: number, humidity: number, pressure: number) => void; // 这样太死板, 有一些布告板只要其中的两个或者一个参数, 这样传递不合适
+  // update: (temperature: number, humidity: number, pressure: number) => void; // 这样太死板, 有一些布告板只要其中的两个或者一个参数, 这样传递不合适
+  update: (subject: Subject) => void;
 }
 
 /**
@@ -12,17 +13,15 @@ export interface Observer {
 export class CurrentConditionDisplay implements Observer, DisplayElement {
   private temperature: number;
   private humidity: number;
-  private weatherData: Subject;
 
-  constructor(weatherData: Subject) {
-    this.weatherData = weatherData;
-    weatherData.registerObserver(this);
-  }
-
-  update(temperature: number, humidity: number, pressure: number) {
-    this.temperature = temperature;
-    this.humidity = humidity;
-    this.display();
+  update(subject: Subject) {
+    // 为了更加自由地获得只需要地参数
+    if (subject instanceof WeatherData) {
+      // 这个布告板只对 WeatherData 感兴趣
+      this.temperature = subject.getTemperature();
+      this.humidity = subject.getHumidity();
+      this.display();
+    }
   }
 
   display() {
@@ -45,20 +44,16 @@ export class StatisticsDisplay implements Observer, DisplayElement {
   private numReadings: number = 0;
   private temperatureAvg: number = 0;
 
-  private weatherData: Subject;
-
-  constructor(weatherData: WeatherData) {
-    this.weatherData = weatherData;
-    this.weatherData.registerObserver(this);
-  }
-
-  update(temperature: number, humidity: number, pressure: number) {
-    this.temperatureMax = Math.max(temperature, this.temperatureMax);
-    this.temperatureMin = Math.min(temperature, this.temperatureMin);
-    this.temperatureSum += temperature;
-    this.numReadings++;
-    this.temperatureAvg = this.temperatureSum / this.numReadings;
-    this.display();
+  update(subject: Subject) {
+    if (subject instanceof WeatherData) {
+      const temperature = subject.getTemperature();
+      this.temperatureMax = Math.max(temperature, this.temperatureMax);
+      this.temperatureMin = Math.min(temperature, this.temperatureMin);
+      this.temperatureSum += temperature;
+      this.numReadings++;
+      this.temperatureAvg = this.temperatureSum / this.numReadings;
+      this.display();
+    }
   }
   display() {
     console.log("------------------------");
@@ -74,13 +69,6 @@ export class StatisticsDisplay implements Observer, DisplayElement {
 
 export class HeatIndexDisplay implements Observer, DisplayElement {
   private heatIndex: number = 0.0;
-
-  private weatherData: WeatherData;
-
-  constructor(weatherData: WeatherData) {
-    this.weatherData = weatherData;
-    this.weatherData.registerObserver(this);
-  }
 
   computeHeatIndex(t: number, rh: number) {
     return (
@@ -103,9 +91,13 @@ export class HeatIndexDisplay implements Observer, DisplayElement {
     );
   }
 
-  update(temperature: number, humidity: number, pressure: number) {
-    this.heatIndex = this.computeHeatIndex(temperature, humidity);
-    this.display();
+  update(subject: Subject) {
+    if (subject instanceof WeatherData) {
+      const temperature = subject.getTemperature();
+      const humidity = subject.getHumidity();
+      this.heatIndex = this.computeHeatIndex(temperature, humidity);
+      this.display();
+    }
   }
 
   display() {
